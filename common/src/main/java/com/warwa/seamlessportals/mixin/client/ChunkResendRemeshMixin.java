@@ -34,6 +34,7 @@ public abstract class ChunkResendRemeshMixin {
         if (l == null || !this.seamlessportals$hadChunk) return;
         this.seamlessportals$hadChunk = false;
         int x = packet.getX(), z = packet.getZ();
+        com.warwa.seamlessportals.SeamlessPortalsConstants.LOGGER.info("[AXIOM-DIAG] chunk resend remesh {} {}", x, z);
         for (int y = l.getMinSectionY(); y <= l.getMaxSectionY(); y++) {
             l.setSectionDirtyWithNeighbors(x, y, z);
         }

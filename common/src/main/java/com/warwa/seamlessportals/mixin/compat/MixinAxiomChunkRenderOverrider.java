@@ -21,9 +21,11 @@ import qouteall.imm_ptl.core.render.MyGameRenderer;
 @Pseudo
 @Mixin(targets = "com.moulberry.axiom.render.ChunkRenderOverrider", remap = false)
 public class MixinAxiomChunkRenderOverrider {
+    private static boolean diagLogged;
 
     @Inject(method = "uploadDirty", at = @At("HEAD"), cancellable = true, require = 0)
     private static void seamlessportals$skipUploadInPortalPass(CallbackInfo ci) {
+        if (!diagLogged) { diagLogged = true; com.warwa.seamlessportals.SeamlessPortalsConstants.LOGGER.info("[AXIOM-DIAG] Axiom compat mixin ACTIVE (uploadDirty hooked)"); }
         if (MyGameRenderer.isInDestPass()) {
             ci.cancel();
         }
