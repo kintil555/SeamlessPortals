@@ -1,6 +1,9 @@
 package com.warwa.seamlessportals.light;
 
+import com.mojang.logging.LogUtils;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,10 @@ import com.warwa.seamlessportals.portal.PortalTransform;
  */
 public final class CrossDimLight {
     public static final int INTERVAL = 10;
+    private static final Logger LOGGER = LogUtils.getLogger();
+    /** Incremented by the mixin each time an override is actually served (diagnostics). */
+    public static final AtomicInteger OVERRIDE_HITS = new AtomicInteger();
+    private static int diagCounter;
 
     /** dimension -> (packed pos -> emission level 1..14), read from the light thread. */
     private static final Map<ResourceKey<Level>, Map<Long, Byte>> CACHE = new ConcurrentHashMap<>();
@@ -61,6 +68,7 @@ public final class CrossDimLight {
     public static void tick(MinecraftServer server) {
         if (server == null || ++tickCounter % INTERVAL != 0) return;
         Map<ResourceKey<Level>, Map<Long, Byte>> next = new HashMap<>();
+        int linkCount = 0, maxRemote = 0;
 
         for (PortalLink link : PortalManager.getServerInstance().getAllLinks()) {
             PortalInfo src = link.getSource();
@@ -68,6 +76,7 @@ public final class CrossDimLight {
             ServerLevel srcLevel = server.getLevel(src.getDimension());
             ServerLevel dstLevel = server.getLevel(dst.getDimension());
             if (srcLevel == null || dstLevel == null) continue;
+            linkCount++;
 
             Vec3 normal = src.getNormal();
             Vec3 center = src.getCenter();
@@ -95,6 +104,7 @@ public final class CrossDimLight {
                         if (!dstLevel.hasChunkAt(dpos)) continue;
 
                         int remote = dstLevel.getBrightness(LightLayer.BLOCK, dpos);
+                        if (remote > maxRemote) maxRemote = remote;
                         int emission = remote - 1;
                         if (emission < 1) continue;
                         next.computeIfAbsent(src.getDimension(), k -> new HashMap<>())
@@ -102,6 +112,13 @@ public final class CrossDimLight {
                     }
                 }
             }
+        }
+
+        if (++diagCounter % 20 == 0) { // every ~10s
+            int seeded = 0;
+            for (Map<Long, Byte> m : next.values()) seeded += m.size();
+            LOGGER.info("[SEAMLESS LIGHT] links={} seededCells={} maxRemote={} overrideHits={}",
+                linkCount, seeded, maxRemote, OVERRIDE_HITS.get());
         }
 
         // Diff against the live cache and re-check changed cells so the engine relights them.
