@@ -24,10 +24,12 @@ public abstract class LightEngineCrossDimMixin {
     private void seamlessportals$crossDimLight(BlockPos pos, CallbackInfoReturnable<BlockState> cir) {
         BlockState state = cir.getReturnValue();
         if (state == null || !state.isAir()) return;
-        if (!(chunkSource.getLevel() instanceof net.minecraft.world.level.Level level)) return;
+        // SERVER engine only: the client engine must not invent light from this server-side cache
+        // (it is never re-checked when seeds drop, which left stale light until a reload).
+        if (!(chunkSource.getLevel() instanceof net.minecraft.server.level.ServerLevel level)) return;
         BlockState override = CrossDimLight.overrideFor(level, pos);
         if (override != null) {
-            (level instanceof net.minecraft.server.level.ServerLevel ? CrossDimLight.SERVER_HITS : CrossDimLight.OVERRIDE_HITS).incrementAndGet();
+            CrossDimLight.SERVER_HITS.incrementAndGet();
             cir.setReturnValue(override);
         }
     }
