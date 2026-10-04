@@ -87,7 +87,9 @@ public final class CrossDimLight {
                         cell.set(x, y, z);
                         if (!srcLevel.hasChunkAt(cell) || !srcLevel.getBlockState(cell).isAir()) continue;
 
-                        Vec3 across = c.subtract(normal.scale(Math.signum(d)));
+                        // Mirror the cell through the plane: the visually adjacent cell across the portal.
+                        // (old code sampled the plane cell itself, one layer off, usually the seam/0 light)
+                        Vec3 across = c.subtract(normal.scale(2.0 * d));
                         Vec3 dp = PortalTransform.transformTeleportPoint(src, dst, src.getType(), across);
                         BlockPos dpos = BlockPos.containing(dp);
                         if (!dstLevel.hasChunkAt(dpos)) continue;

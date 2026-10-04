@@ -2,7 +2,6 @@ package com.warwa.seamlessportals.mixin.passthrough;
 
 import com.warwa.seamlessportals.light.CrossDimLight;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.LightChunkGetter;
 import net.minecraft.world.level.lighting.LightEngine;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,7 +24,7 @@ public abstract class LightEngineCrossDimMixin {
     private void seamlessportals$crossDimLight(BlockPos pos, CallbackInfoReturnable<BlockState> cir) {
         BlockState state = cir.getReturnValue();
         if (state == null || !state.isAir()) return;
-        if (!(chunkSource.getLevel() instanceof ServerLevel level)) return;
+        if (!(chunkSource.getLevel() instanceof net.minecraft.world.level.Level level)) return;
         BlockState override = CrossDimLight.overrideFor(level, pos);
         if (override != null) cir.setReturnValue(override);
     }
