@@ -123,6 +123,10 @@ public class PortalManager {
         );
     }
 
+    public java.util.Collection<PortalLink> getAllLinks() {
+        return linksByPosition.values();
+    }
+
     public List<PortalLink> getLinksInRange(ResourceKey<Level> dimension, BlockPos center, double range) {
         List<PortalLink> result = new ArrayList<>();
         for (PortalInfo portal : getTracker(dimension).getPortalsInRange(center, range)) {
@@ -348,6 +352,7 @@ public class PortalManager {
      */
     public void tickPortalPreWarm(net.minecraft.server.MinecraftServer server) {
         if (server == null) return;
+        com.warwa.seamlessportals.light.CrossDimLight.tick(server);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             if (player == null) continue;
             ResourceKey<Level> playerDim = player.level().dimension();

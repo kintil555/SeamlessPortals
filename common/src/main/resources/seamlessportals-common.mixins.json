@@ -91,6 +91,7 @@
     "passthrough.BlockPopResourceSeamMixin",
     "passthrough.ServerPlayerSeamResendMixin",
     "passthrough.LightEngineSeamTransparencyMixin",
+    "passthrough.LightEngineCrossDimMixin",
     "passthrough.ServerPickSecondaryMixin",
     "passthrough.FlintAndSteelSeamClaimMixin",
     "passthrough.FireBlockSeamBreakMixin",
