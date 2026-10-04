@@ -46,6 +46,24 @@ public class SeamlessPortalsClientFabric implements ClientModInitializer {
     public void onInitializeClient() {
         SeamlessPortalsConstants.LOGGER.info("Seamless Portals client initializing (Fabric)");
 
+        // Cross-portal light: the client light engine shares CrossDimLight's cache (integrated server);
+        // re-check changed cells on every client level so seeds apply AND disappear without a reload.
+        com.warwa.seamlessportals.light.CrossDimLight.clientPresent = true;
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            com.warwa.seamlessportals.light.CrossDimLight.Recheck rc;
+            if (mc.level == null || !qouteall.imm_ptl.core.ClientWorldLoader.getIsInitialized()) { com.warwa.seamlessportals.light.CrossDimLight.CLIENT_RECHECK.clear(); return; }
+            int budget = 4096;
+            while (budget-- > 0 && (rc = com.warwa.seamlessportals.light.CrossDimLight.CLIENT_RECHECK.poll()) != null) {
+                for (net.minecraft.client.multiplayer.ClientLevel cl
+                        : qouteall.imm_ptl.core.ClientWorldLoader.getClientWorlds()) {
+                    if (cl.dimension().equals(rc.dim())) {
+                        net.minecraft.core.BlockPos bp = net.minecraft.core.BlockPos.of(rc.pos());
+                        if (cl.hasChunkAt(bp)) cl.getLightEngine().checkBlock(bp);
+                    }
+                }
+            }
+        });
+
         // ===== WIRE 2 (S13 step 5): UNCONDITIONAL entity-renderer registration =================
         // Wired in BOTH flag states through the S0 renderer seam (PlatformHelper#registerEntity
         // Renderer), mirroring IP's (unported) IPModEntryClient.initPortalRenderers:41-61

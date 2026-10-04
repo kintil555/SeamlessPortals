@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerPlayer;
 import qouteall.imm_ptl.core.McHelper;
 import qouteall.imm_ptl.core.portal.Portal;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import java.util.HashMap;
@@ -48,6 +49,11 @@ public final class CrossDimLight {
     /** consecutive cycles a cell was not re-seeded; removed only after GRACE misses (anti-flicker). */
     private static final Map<Long, Integer> MISSES = new HashMap<>();
     private static final int GRACE = 6;
+    /** Set by the client entrypoint (integrated server only): the client engine shares CACHE. */
+    public static volatile boolean clientPresent;
+    public record Recheck(ResourceKey<Level> dim, long pos) {}
+    /** Cells whose seed changed; drained on the client thread to re-check the CLIENT light engine. */
+    public static final ConcurrentLinkedQueue<Recheck> CLIENT_RECHECK = new ConcurrentLinkedQueue<>();
     private static int diagCounter;
     private static int lastServerTick = -1;
 
@@ -215,6 +221,9 @@ public final class CrossDimLight {
                 for (long packed : changed) {
                     level.getLightEngine().checkBlock(BlockPos.of(packed));
                 }
+            }
+            if (clientPresent) {
+                for (long packed : changed) CLIENT_RECHECK.add(new Recheck(dim, packed));
             }
             if (live.isEmpty()) CACHE.remove(dim);
         }
