@@ -45,6 +45,9 @@ public final class CrossDimLight {
     /** Incremented by the mixin each time an override is actually served (diagnostics). */
     public static final AtomicInteger OVERRIDE_HITS = new AtomicInteger();
     public static final AtomicInteger SERVER_HITS = new AtomicInteger();
+    /** consecutive cycles a cell was not re-seeded; removed only after GRACE misses (anti-flicker). */
+    private static final Map<Long, Integer> MISSES = new HashMap<>();
+    private static final int GRACE = 6;
     private static int diagCounter;
     private static int lastServerTick = -1;
 
@@ -199,7 +202,11 @@ public final class CrossDimLight {
                 if (old == null || !old.equals(e.getValue())) changed.add(e.getKey());
             }
             for (Long key : new ArrayList<>(live.keySet())) {
-                if (!fresh.containsKey(key)) {
+                long mk = key * 31L + dim.hashCode();
+                if (fresh.containsKey(key)) {
+                    MISSES.remove(mk);
+                } else if (MISSES.merge(mk, 1, Integer::sum) >= GRACE) {
+                    MISSES.remove(mk);
                     live.remove(key);
                     changed.add(key);
                 }
