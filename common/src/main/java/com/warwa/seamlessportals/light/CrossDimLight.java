@@ -44,6 +44,7 @@ public final class CrossDimLight {
     private static final Logger LOGGER = LogUtils.getLogger();
     /** Incremented by the mixin each time an override is actually served (diagnostics). */
     public static final AtomicInteger OVERRIDE_HITS = new AtomicInteger();
+    public static final AtomicInteger SERVER_HITS = new AtomicInteger();
     private static int diagCounter;
     private static int lastServerTick = -1;
 
@@ -169,8 +170,20 @@ public final class CrossDimLight {
         if (++diagCounter % 20 == 0) { // every ~10s
             int seeded = 0;
             for (Map<Long, Byte> m : next.values()) seeded += m.size();
-            LOGGER.info("[SEAMLESS LIGHT] links={} seededCells={} maxRemote={} overrideHits={}",
-                linkCount, seeded, maxRemote, OVERRIDE_HITS.get());
+            LOGGER.info("[SEAMLESS LIGHT] links={} seededCells={} maxRemote={} clientHits={} serverHits={}",
+                linkCount, seeded, maxRemote, OVERRIDE_HITS.get(), SERVER_HITS.get());
+            // Does the SERVER engine actually store the seeded level? (stored < emission => engine ignores us)
+            int shown = 0;
+            for (Map.Entry<ResourceKey<Level>, Map<Long, Byte>> de : next.entrySet()) {
+                ServerLevel dl = server.getLevel(de.getKey());
+                if (dl == null) continue;
+                for (Map.Entry<Long, Byte> ce : de.getValue().entrySet()) {
+                    if (shown++ >= 4) break;
+                    BlockPos bp = BlockPos.of(ce.getKey());
+                    LOGGER.info("[SEAMLESS LIGHT]   cell {} emission={} serverBlockLight={}",
+                        bp, ce.getValue(), dl.getBrightness(LightLayer.BLOCK, bp));
+                }
+            }
         }
 
         // Diff against the live cache and re-check changed cells so the engine relights them.

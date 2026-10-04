@@ -27,7 +27,7 @@ public abstract class LightEngineCrossDimMixin {
         if (!(chunkSource.getLevel() instanceof net.minecraft.world.level.Level level)) return;
         BlockState override = CrossDimLight.overrideFor(level, pos);
         if (override != null) {
-            CrossDimLight.OVERRIDE_HITS.incrementAndGet();
+            (level instanceof net.minecraft.server.level.ServerLevel ? CrossDimLight.SERVER_HITS : CrossDimLight.OVERRIDE_HITS).incrementAndGet();
             cir.setReturnValue(override);
         }
     }
