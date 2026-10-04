@@ -22,9 +22,14 @@ jobs:
       - name: Build (Fabric)
         run: |
           chmod +x gradlew
-          ./gradlew :fabric:build --no-daemon --console=plain \
-            -Dorg.gradle.java.installations.paths="$JAVA_HOME" \
-            -Dorg.gradle.java.installations.auto-download=false
+          for i in 1 2 3; do
+            ./gradlew :fabric:build --no-daemon --console=plain \
+              -Dorg.gradle.java.installations.paths="$JAVA_HOME" \
+              -Dorg.gradle.java.installations.auto-download=false && exit 0
+            echo "Build attempt $i failed (possibly transient maven error), retrying..."
+            sleep 20
+          done
+          exit 1
 
       - uses: actions/upload-artifact@v4
         with:
