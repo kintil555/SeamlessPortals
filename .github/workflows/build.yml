@@ -1,0 +1,33 @@
+name: Build
+
+on:
+  push:
+    branches: [mc-26.2-main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build (Fabric)
+        run: |
+          chmod +x gradlew
+          ./gradlew :fabric:build --no-daemon --console=plain \
+            -Dorg.gradle.java.installations.paths="$JAVA_HOME" \
+            -Dorg.gradle.java.installations.auto-download=false
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seamlessportals-fabric
+          path: fabric/build/libs/*.jar
+          if-no-files-found: error

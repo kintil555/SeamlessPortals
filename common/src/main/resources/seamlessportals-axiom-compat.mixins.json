@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "package": "com.warwa.seamlessportals.mixin.compat",
+  "compatibilityLevel": "JAVA_25",
+  "minVersion": "0.8",
+  "client": [
+    "MixinAxiomChunkRenderOverrider"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

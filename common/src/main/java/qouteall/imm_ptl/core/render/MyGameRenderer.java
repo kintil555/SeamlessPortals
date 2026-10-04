@@ -209,6 +209,11 @@ public class MyGameRenderer {
     // switchAndRenderTheWorld. 0 = outermost; only the outermost interval accumulates.
     private static int destPassBracketDepth = 0;
 
+    /** True while a portal/dest-world pass runs (render thread). Used by third-party compat mixins. */
+    public static boolean isInDestPass() {
+        return destPassBracketDepth > 0;
+    }
+
     public static void endFramePooled() {
         for (RenderBuffers renderBuffers : secondaryRenderBuffers) {
             renderBuffers.endFrame();
