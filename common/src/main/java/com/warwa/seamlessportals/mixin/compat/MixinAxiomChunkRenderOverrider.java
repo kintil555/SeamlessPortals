@@ -23,23 +23,18 @@ import qouteall.imm_ptl.core.render.MyGameRenderer;
 public class MixinAxiomChunkRenderOverrider {
     private static boolean diagLogged;
 
-    private static int diagCount;
-    private static void diag(String what) {
-        if (diagCount++ < 40) {
-            com.warwa.seamlessportals.SeamlessPortalsConstants.LOGGER.info("[AXIOM-DIAG] override.{} destPass={}", what, MyGameRenderer.isInDestPass());
-        }
-    }
     @Inject(method = "setBlock", at = @At("HEAD"), require = 0)
-    private static void seamlessportals$dSet(CallbackInfo ci) { diag("setBlock"); }
+    private static void seamlessportals$dSet(CallbackInfo ci) { com.warwa.seamlessportals.AxiomDiag.hit(0); }
     @Inject(method = "revertBlock", at = @At("HEAD"), require = 0)
-    private static void seamlessportals$dRevert(CallbackInfo ci) { diag("revertBlock"); }
+    private static void seamlessportals$dRevert(CallbackInfo ci) { com.warwa.seamlessportals.AxiomDiag.hit(1); }
     @Inject(method = "invalidateChunkSection", at = @At("HEAD"), require = 0)
-    private static void seamlessportals$dInval(CallbackInfo ci) { diag("invalidateChunkSection"); }
+    private static void seamlessportals$dInval(CallbackInfo ci) { com.warwa.seamlessportals.AxiomDiag.hit(2); }
     @Inject(method = "loadBlocks", at = @At("HEAD"), require = 0)
-    private static void seamlessportals$dLoad(CallbackInfo ci) { diag("loadBlocks"); }
+    private static void seamlessportals$dLoad(CallbackInfo ci) { com.warwa.seamlessportals.AxiomDiag.hit(3); }
 
     @Inject(method = "uploadDirty", at = @At("HEAD"), cancellable = true, require = 0)
     private static void seamlessportals$skipUploadInPortalPass(CallbackInfo ci) {
+        com.warwa.seamlessportals.AxiomDiag.flush();
         if (!diagLogged) { diagLogged = true; com.warwa.seamlessportals.SeamlessPortalsConstants.LOGGER.info("[AXIOM-DIAG] Axiom compat mixin ACTIVE (uploadDirty hooked)"); }
         if (MyGameRenderer.isInDestPass()) {
             ci.cancel();

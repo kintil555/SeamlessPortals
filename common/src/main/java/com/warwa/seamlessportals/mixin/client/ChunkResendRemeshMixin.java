@@ -25,9 +25,7 @@ public abstract class ChunkResendRemeshMixin {
 
     @Inject(method = {"handleChunkBlocksUpdate", "handleBlockUpdate", "handleLevelChunkWithLight"}, at = @At("HEAD"), require = 0)
     private void seamlessportals$diagPackets(CallbackInfo ci) {
-        if (seamlessportals$diagN++ < 40) {
-            com.warwa.seamlessportals.SeamlessPortalsConstants.LOGGER.info("[AXIOM-DIAG] block/chunk packet received");
-        }
+        com.warwa.seamlessportals.AxiomDiag.hit(4);
     }
 
     @Inject(method = "handleLevelChunkWithLight", at = @At("HEAD"))
@@ -42,7 +40,7 @@ public abstract class ChunkResendRemeshMixin {
         if (l == null || !this.seamlessportals$hadChunk) return;
         this.seamlessportals$hadChunk = false;
         int x = packet.getX(), z = packet.getZ();
-        com.warwa.seamlessportals.SeamlessPortalsConstants.LOGGER.info("[AXIOM-DIAG] chunk resend remesh {} {}", x, z);
+        com.warwa.seamlessportals.AxiomDiag.hit(5);
         for (int y = l.getMinSectionY(); y <= l.getMaxSectionY(); y++) {
             l.setSectionDirtyWithNeighbors(x, y, z);
         }
