@@ -465,6 +465,10 @@ public final class SeamlessClientTeleport {
             player.setXRot(destPitch);
             player.yRotO += sameDimYawDelta;
             player.xRotO += sameDimPitchDelta;
+            player.yBodyRot += sameDimYawDelta;
+            player.yBodyRotO += sameDimYawDelta;
+            player.yHeadRot += sameDimYawDelta;
+            player.yHeadRotO += sameDimYawDelta;
             player.yBob += sameDimYawDelta;
             player.yBobO += sameDimYawDelta;
             player.xBob += sameDimPitchDelta;
@@ -661,6 +665,12 @@ public final class SeamlessClientTeleport {
         player.setXRot(destPitch);
         player.yRotO += yawDelta;
         player.xRotO += pitchDelta;
+        // 3D model: body/head yaw are lagged fields too. Without shifting them the player
+        // model's body snaps to the new heading after the swap (visible in third person).
+        player.yBodyRot += yawDelta;
+        player.yBodyRotO += yawDelta;
+        player.yHeadRot += yawDelta;
+        player.yHeadRotO += yawDelta;
         player.yBob += yawDelta;
         player.yBobO += yawDelta;
         player.xBob += pitchDelta;
