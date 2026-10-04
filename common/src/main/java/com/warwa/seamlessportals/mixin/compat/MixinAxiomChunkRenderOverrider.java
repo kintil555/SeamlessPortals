@@ -29,8 +29,6 @@ public class MixinAxiomChunkRenderOverrider {
     private static void seamlessportals$dRevert(CallbackInfo ci) { com.warwa.seamlessportals.AxiomDiag.hit(1); }
     @Inject(method = "invalidateChunkSection", at = @At("HEAD"), require = 0)
     private static void seamlessportals$dInval(CallbackInfo ci) { com.warwa.seamlessportals.AxiomDiag.hit(2); }
-    @Inject(method = "loadBlocks", at = @At("HEAD"), require = 0)
-    private static void seamlessportals$dLoad(CallbackInfo ci) { com.warwa.seamlessportals.AxiomDiag.hit(3); }
 
     @Inject(method = "uploadDirty", at = @At("HEAD"), cancellable = true, require = 0)
     private static void seamlessportals$skipUploadInPortalPass(CallbackInfo ci) {
