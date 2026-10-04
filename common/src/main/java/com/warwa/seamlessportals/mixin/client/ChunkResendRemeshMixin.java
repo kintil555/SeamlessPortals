@@ -37,7 +37,7 @@ public abstract class ChunkResendRemeshMixin {
     @Inject(method = "handleLevelChunkWithLight", at = @At("RETURN"))
     private void seamlessportals$remeshResent(ClientboundLevelChunkWithLightPacket packet, CallbackInfo ci) {
         ClientLevel l = this.level;
-        if (l == null || !this.seamlessportals$hadChunk) return;
+        if (l == null) return;
         this.seamlessportals$hadChunk = false;
         int x = packet.getX(), z = packet.getZ();
         com.warwa.seamlessportals.AxiomDiag.hit(5);
