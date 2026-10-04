@@ -33,6 +33,8 @@ public class SeamlessPortalsModFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         SeamlessPortalsConstants.LOGGER.info("Seamless Portals initializing (Fabric)");
+        // Cross-dimension/same-dim portal light: ticks in BOTH flag states (idempotent per server tick).
+        ServerTickEvents.END_SERVER_TICK.register(com.warwa.seamlessportals.light.CrossDimLight::tick);
 
         // Load the configurable knob(s) (portalRenderDistance = dest loading/mesh depth) — this also
         // round-trips the entityPortals master switch into the properties file. UNCONDITIONAL: config

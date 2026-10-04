@@ -1,6 +1,9 @@
 package com.warwa.seamlessportals.light;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.server.level.ServerPlayer;
+import qouteall.imm_ptl.core.McHelper;
+import qouteall.imm_ptl.core.portal.Portal;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
@@ -42,6 +45,7 @@ public final class CrossDimLight {
     /** Incremented by the mixin each time an override is actually served (diagnostics). */
     public static final AtomicInteger OVERRIDE_HITS = new AtomicInteger();
     private static int diagCounter;
+    private static int lastServerTick = -1;
 
     /** dimension -> (packed pos -> emission level 1..14), read from the light thread. */
     private static final Map<ResourceKey<Level>, Map<Long, Byte>> CACHE = new ConcurrentHashMap<>();
@@ -66,7 +70,10 @@ public final class CrossDimLight {
     }
 
     public static void tick(MinecraftServer server) {
-        if (server == null || ++tickCounter % INTERVAL != 0) return;
+        if (server == null) return;
+        if (server.getTickCount() == lastServerTick) return; // may be called from 2 hooks
+        lastServerTick = server.getTickCount();
+        if (++tickCounter % INTERVAL != 0) return;
         Map<ResourceKey<Level>, Map<Long, Byte>> next = new HashMap<>();
         int linkCount = 0, maxRemote = 0;
 
@@ -109,6 +116,51 @@ public final class CrossDimLight {
                         if (emission < 1) continue;
                         next.computeIfAbsent(src.getDimension(), k -> new HashMap<>())
                             .merge(cell.asLong(), (byte) emission, (a, b) -> (byte) Math.max(a, b));
+                    }
+                }
+            }
+        }
+
+
+        // ---- Entity portals (the flag-ON engine: qouteall Portal entities). ----
+        // IP-style portals show the destination 1:1 through the plane (transformPoint, no depth
+        // negation), so a front-side cell at +d sees the destination at the mirrored point -d.
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (!(player.level() instanceof ServerLevel sl)) continue;
+            for (Portal portal : McHelper.getEntitiesNearby(sl, player.position(), Portal.class, 48.0)) {
+                if (!portal.isAlive()) continue;
+                ServerLevel dstLevel = server.getLevel(portal.getDestDim());
+                if (dstLevel == null) continue;
+                linkCount++;
+                Vec3 origin = portal.getOriginPos();
+                Vec3 normal = portal.getNormal();
+                Vec3 axisW = portal.getAxisW();
+                Vec3 axisH = portal.getAxisH();
+                double halfW = portal.getWidth() / 2.0 + 1.0;
+                double halfH = portal.getHeight() / 2.0 + 1.0;
+                int r = (int) Math.min(12, Math.ceil(Math.max(halfW, halfH)) + 2);
+                int ox = (int) Math.floor(origin.x), oy = (int) Math.floor(origin.y), oz = (int) Math.floor(origin.z);
+                BlockPos.MutableBlockPos cell = new BlockPos.MutableBlockPos();
+                for (int x = ox - r; x <= ox + r; x++) {
+                    for (int y = oy - r; y <= oy + r; y++) {
+                        for (int z = oz - r; z <= oz + r; z++) {
+                            Vec3 c = new Vec3(x + 0.5, y + 0.5, z + 0.5);
+                            Vec3 rel = c.subtract(origin);
+                            double d = rel.dot(normal);
+                            if (Math.abs(d) < 0.5 || Math.abs(d) > 1.5) continue; // adjacent layer only
+                            if (Math.abs(rel.dot(axisW)) > halfW || Math.abs(rel.dot(axisH)) > halfH) continue;
+                            cell.set(x, y, z);
+                            if (!sl.hasChunkAt(cell) || !sl.getBlockState(cell).isAir()) continue;
+                            Vec3 across = c.subtract(normal.scale(2.0 * d));
+                            BlockPos dpos = BlockPos.containing(portal.transformPoint(across));
+                            if (!dstLevel.hasChunkAt(dpos)) continue;
+                            int remote = dstLevel.getBrightness(LightLayer.BLOCK, dpos);
+                            if (remote > maxRemote) maxRemote = remote;
+                            int emission = remote - 1;
+                            if (emission < 1) continue;
+                            next.computeIfAbsent(sl.dimension(), k -> new HashMap<>())
+                                .merge(cell.asLong(), (byte) emission, (a, b) -> (byte) Math.max(a, b));
+                        }
                     }
                 }
             }
