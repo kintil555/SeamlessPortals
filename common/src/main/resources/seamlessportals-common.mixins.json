@@ -84,6 +84,7 @@
     "client.compat.SodiumFogOverrideMixin"
   ],
   "mixins": [
+    "ChunkMapGetPlayersMixin",
     "passthrough.SeamIndexHolderMixin",
     "passthrough.BlockStateBaseFractionalMixin",
     "passthrough.ServerPlayerGameModeSecondaryBreakMixin",
