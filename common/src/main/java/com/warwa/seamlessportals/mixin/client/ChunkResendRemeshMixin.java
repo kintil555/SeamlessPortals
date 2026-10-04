@@ -21,6 +21,14 @@ public abstract class ChunkResendRemeshMixin {
     @Shadow private ClientLevel level;
 
     @Unique private boolean seamlessportals$hadChunk;
+    @Unique private static int seamlessportals$diagN;
+
+    @Inject(method = {"handleChunkBlocksUpdate", "handleBlockUpdate", "handleLevelChunkWithLight"}, at = @At("HEAD"), require = 0)
+    private void seamlessportals$diagPackets(CallbackInfo ci) {
+        if (seamlessportals$diagN++ < 40) {
+            com.warwa.seamlessportals.SeamlessPortalsConstants.LOGGER.info("[AXIOM-DIAG] block/chunk packet received");
+        }
+    }
 
     @Inject(method = "handleLevelChunkWithLight", at = @At("HEAD"))
     private void seamlessportals$markExisting(ClientboundLevelChunkWithLightPacket packet, CallbackInfo ci) {

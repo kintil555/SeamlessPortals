@@ -23,6 +23,21 @@ import qouteall.imm_ptl.core.render.MyGameRenderer;
 public class MixinAxiomChunkRenderOverrider {
     private static boolean diagLogged;
 
+    private static int diagCount;
+    private static void diag(String what) {
+        if (diagCount++ < 40) {
+            com.warwa.seamlessportals.SeamlessPortalsConstants.LOGGER.info("[AXIOM-DIAG] override.{} destPass={}", what, MyGameRenderer.isInDestPass());
+        }
+    }
+    @Inject(method = "setBlock", at = @At("HEAD"), require = 0)
+    private static void seamlessportals$dSet(CallbackInfo ci) { diag("setBlock"); }
+    @Inject(method = "revertBlock", at = @At("HEAD"), require = 0)
+    private static void seamlessportals$dRevert(CallbackInfo ci) { diag("revertBlock"); }
+    @Inject(method = "invalidateChunkSection", at = @At("HEAD"), require = 0)
+    private static void seamlessportals$dInval(CallbackInfo ci) { diag("invalidateChunkSection"); }
+    @Inject(method = "loadBlocks", at = @At("HEAD"), require = 0)
+    private static void seamlessportals$dLoad(CallbackInfo ci) { diag("loadBlocks"); }
+
     @Inject(method = "uploadDirty", at = @At("HEAD"), cancellable = true, require = 0)
     private static void seamlessportals$skipUploadInPortalPass(CallbackInfo ci) {
         if (!diagLogged) { diagLogged = true; com.warwa.seamlessportals.SeamlessPortalsConstants.LOGGER.info("[AXIOM-DIAG] Axiom compat mixin ACTIVE (uploadDirty hooked)"); }
